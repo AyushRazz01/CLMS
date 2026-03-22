@@ -48,4 +48,7 @@ prompt
 
 server.log
 # Skills directory
-/skills/
+/skills/.env 
+prisma/dev.db 
+.env 
+prisma/dev.db 
