@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/hooks/use-toast'
+import { createClient } from '@/lib/supabase/client'
 import {
   BookOpen,
   LayoutDashboard,
@@ -64,14 +65,23 @@ export function Sidebar({ user }: SidebarProps) {
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
 
-  const handleLogout = () => {
-    sessionStorage.clear()
-    localStorage.clear()
-    router.replace('/')
-    toast({
-      title: 'Logged out',
-      description: 'You have been successfully logged out.',
-    })
+  const handleLogout = async () => {
+    try {
+      const supabase = createClient()
+      await supabase.auth.signOut()
+      
+      sessionStorage.clear()
+      localStorage.clear()
+      
+      router.replace('/')
+      toast({
+        title: 'Logged out',
+        description: 'You have been successfully logged out.',
+      })
+    } catch (error) {
+      console.error('Logout error:', error)
+      router.replace('/')
+    }
   }
 
   const getRoleColor = (role: string) => {

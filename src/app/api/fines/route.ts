@@ -1,42 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams
-    const userId = searchParams.get('userId')
+    const userId = request.nextUrl.searchParams.get('userId')
+    const supabase = createAdminClient()
 
-    let whereClause: any = {}
-    
-    // If userId is provided, filter by user (for students/faculty)
+    let query = supabase
+      .from('fines')
+      .select(`
+        *,
+        profiles:user_id ( id, full_name, email, role )
+      `)
+      .order('created_at', { ascending: false })
+
     if (userId) {
-      whereClause.userId = userId
+      query = query.eq('user_id', userId)
     }
 
-    const fines = await db.fine.findMany({
-      where: whereClause,
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    })
+    const { data: fines, error } = await query
+    if (error) throw error
 
-    return NextResponse.json(fines)
-
+    return NextResponse.json(fines ?? [])
   } catch (error) {
     console.error('Fines fetch error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

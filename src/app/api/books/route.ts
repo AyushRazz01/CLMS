@@ -1,50 +1,70 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
-    const category = searchParams.get('category')
     const search = searchParams.get('search')
+    const genre = searchParams.get('genre') // replaces 'category'
     const available = searchParams.get('available')
 
-    const where: any = {}
+    const supabase = createAdminClient()
 
-    if (category && category !== 'all') {
-      where.categoryId = category
+    let query = supabase
+      .from('books')
+      .select('*, categories(id, name)')
+      .order('title', { ascending: true })
+
+    if (genre && genre !== 'all') {
+      query = query.eq('genre', genre)
     }
 
     if (available === 'true') {
-      where.available = {
-        gt: 0
-      }
+      query = query.gt('available_copies', 0)
     }
 
     if (search) {
-      where.OR = [
-        { title: { contains: search } },
-        { author: { contains: search } },
-        { isbn: { contains: search } }
-      ]
+      query = query.or(`title.ilike.%${search}%,author.ilike.%${search}%,genre.ilike.%${search}%`)
     }
 
-    const books = await db.book.findMany({
-      where,
-      include: {
-        category: true
-      },
-      orderBy: {
-        title: 'asc'
-      }
-    })
+    const { data: books, error } = await query
 
-    return NextResponse.json({ books })
+    if (error) throw error
 
+    return NextResponse.json({ books: books ?? [] })
   } catch (error) {
     console.error('Books fetch error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const supabase = createAdminClient()
+
+    const { data: book, error } = await supabase
+      .from('books')
+      .insert({
+        title: body.title,
+        author: body.author,
+        genre: body.genre ?? null,
+        rating: body.rating ?? null,
+        total_copies: body.total_copies ?? 1,
+        available_copies: body.available_copies ?? body.total_copies ?? 1,
+        description: body.description ?? null,
+        cover_url: body.cover_url ?? null,
+        summary: body.summary ?? null,
+        category_id: body.category_id ?? null,
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+
+    return NextResponse.json({ book }, { status: 201 })
+  } catch (error) {
+    console.error('Book create error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

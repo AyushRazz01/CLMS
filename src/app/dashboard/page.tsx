@@ -8,6 +8,7 @@ import { Sidebar } from '@/components/sidebar'
 import { BookOpen, BookMarked, AlertCircle, DollarSign, Library, Users, ArrowRight, LogOut, User } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/hooks/use-toast'
+import { createClient } from '@/lib/supabase/client'
 
 interface UserData {
   id: string
@@ -32,103 +33,55 @@ export default function DashboardPage() {
   const [authError, setAuthError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Check for auth error from redirect loop
-    if (typeof window !== 'undefined') {
-      const error = sessionStorage.getItem('authError')
-      if (error) {
-        setAuthError(error)
-        sessionStorage.removeItem('authError')
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
+    const checkAuth = async () => {
       try {
-        // Prevent redirect loop by checking if we just redirected
-        if (typeof window !== 'undefined') {
-          const redirectCount = parseInt(sessionStorage.getItem('redirectCount') || '0')
-          if (redirectCount > 3) {
-            console.error('Too many redirects detected!')
-            sessionStorage.setItem('authError', 'Too many redirects. Please clear your storage and try again.')
-            return
-          }
-          sessionStorage.setItem('redirectCount', String(redirectCount + 1))
-        }
+        const supabase = createClient()
+        const { data: { user: supabaseUser }, error } = await supabase.auth.getUser()
 
-        let token: string | null = null
-        let userData: string | null = null
-        let fromUrl = false
-
-        // First, check URL parameters (for preview environment)
-        if (typeof window !== 'undefined') {
-          const urlParams = new URLSearchParams(window.location.search)
-          const userParam = urlParams.get('u')
-          const tokenParam = urlParams.get('t')
-
-          if (userParam && tokenParam) {
-            try {
-              userData = decodeURIComponent(userParam)
-              token = decodeURIComponent(tokenParam)
-              fromUrl = true
-
-              // Store in both storages
-              sessionStorage.setItem('user', userData)
-              sessionStorage.setItem('token', token)
-              localStorage.setItem('user', userData)
-              localStorage.setItem('token', token)
-
-              // Reset redirect count on successful auth
-              sessionStorage.setItem('redirectCount', '0')
-
-              // Clean URL
-              window.history.replaceState({}, '', '/dashboard')
-            } catch (e) {
-              console.error('Error decoding URL params:', e)
-            }
-          }
-        }
-
-        // Try sessionStorage if not in URL
-        if (!token || !userData) {
-          token = sessionStorage.getItem('token')
-          userData = sessionStorage.getItem('user')
-        }
-
-        // Fall back to localStorage
-        if (!token || !userData) {
-          token = localStorage.getItem('token')
-          userData = localStorage.getItem('user')
-        }
-
-        if (!token || !userData) {
-          console.log('No authentication data found, redirecting to login')
+        if (error || !supabaseUser) {
+          console.log('No active session found, redirecting to login')
           router.replace('/')
           return
         }
 
-        try {
-          const parsedUser = JSON.parse(userData)
-          console.log('User authenticated:', parsedUser.email, parsedUser.role, 'from URL:', fromUrl)
+        // Fetch profile to get role and other details
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', supabaseUser.id)
+          .single()
 
-          // Reset redirect count on successful auth
-          sessionStorage.setItem('redirectCount', '0')
-
-          setUser(parsedUser)
-          fetchDashboardStats(parsedUser.id, parsedUser.role)
-        } catch (parseError) {
-          console.error('Failed to parse user data:', parseError)
-          sessionStorage.clear()
-          localStorage.clear()
-          router.replace('/')
+        if (profileError) {
+          console.error('Error fetching profile:', profileError)
+          // Fallback to basic info from session
+          const userData: UserData = {
+            id: supabaseUser.id,
+            email: supabaseUser.email!,
+            name: supabaseUser.user_metadata?.full_name || supabaseUser.email!,
+            role: 'STUDENT'
+          }
+          setUser(userData)
+          fetchDashboardStats(userData.id, userData.role)
+        } else {
+          const userData: UserData = {
+            id: profile.id,
+            email: profile.email || supabaseUser.email!,
+            name: profile.full_name || supabaseUser.user_metadata?.full_name || supabaseUser.email!,
+            role: profile.role,
+            branch: profile.branch || undefined,
+            year: profile.year || undefined,
+            semester: profile.semester || undefined
+          }
+          setUser(userData)
+          fetchDashboardStats(userData.id, userData.role)
         }
-      } catch (error) {
-        console.error('Storage access error:', error)
+      } catch (err) {
+        console.error('Auth check error:', err)
         router.replace('/')
       }
-    }, 200)
+    }
 
-    return () => clearTimeout(timer)
+    checkAuth()
   }, [])
 
   const fetchDashboardStats = async (userId: string, role: string) => {
@@ -146,14 +99,24 @@ export default function DashboardPage() {
     }
   }
 
-  const handleLogout = () => {
-    sessionStorage.clear()
-    localStorage.clear()
-    router.replace('/')
-    toast({
-      title: 'Logged out successfully',
-      description: 'See you again soon!',
-    })
+  const handleLogout = async () => {
+    try {
+      const supabase = createClient()
+      await supabase.auth.signOut()
+      
+      sessionStorage.clear()
+      localStorage.clear()
+      
+      toast({
+        title: 'Logged out successfully',
+        description: 'See you again soon!',
+      })
+      
+      router.replace('/')
+    } catch (error) {
+      console.error('Logout error:', error)
+      router.replace('/')
+    }
   }
 
   const getRoleColor = (role: string) => {

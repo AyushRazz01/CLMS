@@ -35,6 +35,7 @@ export default function AuthPage() {
   const [registerPassword, setRegisterPassword] = useState('')
   const [registerConfirmPassword, setRegisterConfirmPassword] = useState('')
   const [registerRole, setRegisterRole] = useState('STUDENT')
+  const [registerUniversityId, setRegisterUniversityId] = useState('')
   const [registerBranch, setRegisterBranch] = useState('')
   const [registerYear, setRegisterYear] = useState('')
   const [registerSemester, setRegisterSemester] = useState('')
@@ -69,17 +70,11 @@ export default function AuthPage() {
         description: 'Redirecting to dashboard...',
       })
 
-      // Store user data in both storage types
-      const userStr = JSON.stringify(data.user)
-      sessionStorage.setItem('user', userStr)
-      sessionStorage.setItem('token', data.token)
-      localStorage.setItem('user', userStr)
-      localStorage.setItem('token', data.token)
+      // Store basic user info for immediate UI feedback (optional, session handled by cookies)
+      localStorage.setItem('user', JSON.stringify(data.user))
 
-      // For preview environment, pass user info via URL
-      const encodedUser = encodeURIComponent(userStr)
-      const encodedToken = encodeURIComponent(data.token)
-      window.location.href = `/dashboard?u=${encodedUser}&t=${encodedToken}`
+      // Simple redirect - middleware will handle session verification
+      router.push('/dashboard')
 
     } catch (err: any) {
       console.error('Login error:', err)
@@ -112,6 +107,7 @@ export default function AuthPage() {
         email: registerEmail,
         password: registerPassword,
         role: registerRole,
+        university_id: registerUniversityId,
       }
 
       // Add student/faculty specific fields
@@ -144,6 +140,7 @@ export default function AuthPage() {
       // Switch to login tab
       setRegisterName('')
       setRegisterEmail('')
+      setRegisterUniversityId('')
       setRegisterPassword('')
       setRegisterConfirmPassword('')
       setRegisterBranch('')
@@ -290,11 +287,25 @@ export default function AuthPage() {
                         <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="register-name"
-                          type="text"
                           placeholder="Enter your full name"
                           className="pl-10"
                           value={registerName}
                           onChange={(e) => setRegisterName(e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="register-university-id">University ID / Employee ID</Label>
+                      <div className="relative">
+                        <GraduationCap className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="register-university-id"
+                          placeholder="Enter your ID"
+                          className="pl-10"
+                          value={registerUniversityId}
+                          onChange={(e) => setRegisterUniversityId(e.target.value)}
                           required
                         />
                       </div>

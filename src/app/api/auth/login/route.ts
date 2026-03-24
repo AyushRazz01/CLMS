@@ -1,70 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
-import bcrypt from 'bcryptjs'
-import jwt from 'jsonwebtoken'
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
+import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { email, password } = body
+    const { email, password } = await request.json()
 
-    // Validation
     if (!email || !password) {
-      return NextResponse.json(
-        { error: 'Email and password are required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
     }
 
-    // Find user
-    const user = await db.user.findUnique({
-      where: { email }
-    })
+    // Use SSR-friendly client to handle cookies
+    const supabase = await createClient()
 
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
-      )
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+
+    if (error) {
+      console.error('Supabase login error:', error.message)
+      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
 
-    // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user.password)
+    // Use admin client to fetch profile (bypasses RLS so it always works)
+    // Profile information is needed to determine the user's role and status
+    const adminClient = createAdminClient()
 
-    if (!isPasswordValid) {
-      return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
-      )
-    }
-
-    // Generate JWT token
-    const token = jwt.sign(
-      {
-        userId: user.id,
-        email: user.email,
-        role: user.role
-      },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    )
-
-    // Remove password from user object
-    const { password: _, ...userWithoutPassword } = user
+    const { data: profile } = await adminClient
+      .from('profiles')
+      .select('*')
+      .eq('id', data.user.id)
+      .single()
 
     return NextResponse.json({
       message: 'Login successful',
-      user: userWithoutPassword,
-      token
+      user: {
+        id: data.user.id,
+        email: data.user.email,
+        name: profile?.full_name ?? data.user.email,
+        role: profile?.role ?? 'STUDENT',
+        status: profile?.status ?? 'PENDING',
+        university_id: profile?.university_id,
+      },
+      token: data.session.access_token,
     })
-
   } catch (error) {
     console.error('Login error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

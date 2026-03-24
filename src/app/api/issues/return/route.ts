@@ -1,61 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
-import { BookStatus } from '@prisma/client'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { issueId } = body
+    const { issueId } = await request.json()
 
     if (!issueId) {
-      return NextResponse.json(
-        { error: 'Issue ID is required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Issue ID is required' }, { status: 400 })
     }
 
-    // Get the issue details
-    const issue = await db.issue.findUnique({
-      where: { id: issueId },
-      include: {
-        book: true
-      }
-    })
+    const supabase = createAdminClient()
 
-    if (!issue) {
-      return NextResponse.json(
-        { error: 'Issue not found' },
-        { status: 404 }
-      )
+    // Get borrow record with book info
+    const { data: record, error: fetchErr } = await supabase
+      .from('borrow_records')
+      .select('*, books:book_id(id, available_copies)')
+      .eq('id', issueId)
+      .single()
+
+    if (fetchErr || !record) {
+      return NextResponse.json({ error: 'Borrow record not found' }, { status: 404 })
     }
 
-    // Update issue status and return date
-    const updatedIssue = await db.issue.update({
-      where: { id: issueId },
-      data: {
-        returnDate: new Date(),
-        status: BookStatus.AVAILABLE
-      }
-    })
+    // Update record to RETURNED
+    const { data: updated, error: updateErr } = await supabase
+      .from('borrow_records')
+      .update({ return_date: new Date().toISOString(), status: 'RETURNED' })
+      .eq('id', issueId)
+      .select()
+      .single()
 
-    // Update book availability
-    await db.book.update({
-      where: { id: issue.bookId },
-      data: {
-        available: issue.book.available + 1
-      }
-    })
+    if (updateErr) throw updateErr
 
-    return NextResponse.json({
-      message: 'Book returned successfully',
-      issue: updatedIssue
-    })
+    // Increment available_copies on the book
+    const book = record.books as any
+    if (book) {
+      await supabase
+        .from('books')
+        .update({ available_copies: book.available_copies + 1 })
+        .eq('id', book.id)
+    }
 
+    return NextResponse.json({ message: 'Book returned successfully', issue: updated })
   } catch (error) {
     console.error('Return book error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

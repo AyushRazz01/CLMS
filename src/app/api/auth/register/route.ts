@@ -1,83 +1,76 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
-import { UserRole } from '@prisma/client'
-import bcrypt from 'bcryptjs'
+import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+
+const VALID_ROLES = ['ADMIN', 'STUDENT', 'LIBRARIAN', 'FACULTY']
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { name, email, password, role, branch, year, semester } = body
+    const { name, email, password, role, university_id, branch, year, semester } = await request.json()
 
-    // Validation
     if (!name || !email || !password) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    if (!Object.values(UserRole).includes(role)) {
-      return NextResponse.json(
-        { error: 'Invalid role' },
-        { status: 400 }
-      )
-    }
+    const resolvedRole = VALID_ROLES.includes(role) ? role : 'STUDENT'
 
-    // Check if user already exists
-    const existingUser = await db.user.findUnique({
-      where: { email }
-    })
+    // Use admin client for creation and upsert as it bypasses RLS
+    const adminClient = createAdminClient()
 
-    if (existingUser) {
-      return NextResponse.json(
-        { error: 'User already exists with this email' },
-        { status: 400 }
-      )
-    }
+    let userId: string
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10)
-
-    // Create user
-    const userData: any = {
-      name,
+    // Create user in Supabase Auth
+    const { data: userData, error: createError } = await adminClient.auth.admin.createUser({
       email,
-      password: hashedPassword,
-      role
+      password,
+      email_confirm: true,
+      user_metadata: { full_name: name },
+    })
+
+    if (createError) {
+      if (createError.message.toLowerCase().includes('already registered')) {
+        return NextResponse.json({ error: 'An account with this email already exists' }, { status: 400 })
+      }
+      throw createError
     }
 
-    // Add optional fields
-    if (branch) userData.branch = branch
-    if (year) userData.year = year
-    if (semester) userData.semester = semester
+    userId = userData.user.id
 
-    const user = await db.user.create({
-      data: userData,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        branch: true,
-        year: true,
-        semester: true,
-        createdAt: true
-      }
-    })
+    // Upsert profile with ALL fields
+    const { error: upsertError } = await adminClient
+      .from('profiles')
+      .upsert({
+        id: userId,
+        full_name: name,
+        email,
+        role: resolvedRole as any,
+        university_id: university_id ?? null,
+        branch: branch ?? null,
+        year: year ? parseInt(year) : null,
+        semester: semester ? parseInt(semester) : null,
+        status: 'APPROVED', // Auto-approve for now based on previous app logic
+      })
+
+    if (upsertError) throw upsertError
+
+    // Automatically sign in the user after registration so they have a session
+    const supabase = await createClient()
+    const { error: loginError } = await supabase.auth.signInWithPassword({ email, password })
+    
+    if (loginError) {
+      console.error('Post-registration login error:', loginError.message)
+      // We don't fail registration if login fails, but they'll have to log in manually
+    }
 
     return NextResponse.json(
-      {
-        message: 'User created successfully',
-        user
+      { 
+        message: 'Account created successfully.', 
+        user: { id: userId, email, name, role: resolvedRole } 
       },
       { status: 201 }
     )
-
   } catch (error) {
     console.error('Registration error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

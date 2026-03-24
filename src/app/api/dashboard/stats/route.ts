@@ -1,80 +1,66 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams
-    const userId = searchParams.get('userId')
-    const role = searchParams.get('role')
+    const userId = request.nextUrl.searchParams.get('userId')
+    const role = request.nextUrl.searchParams.get('role')
 
     if (!userId || !role) {
-      return NextResponse.json(
-        { error: 'Missing required parameters' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 })
     }
 
-    let stats: any = {
-      issuedBooks: 0,
-      overdueBooks: 0,
-      fines: 0,
-      totalBooks: 0
-    }
+    const supabase = createAdminClient()
+    const now = new Date().toISOString()
 
-    const now = new Date()
+    let stats = { issuedBooks: 0, overdueBooks: 0, fines: 0, totalBooks: 0 }
 
+    // Logic for Student or Faculty (Users who borrow books)
     if (role === 'STUDENT' || role === 'FACULTY') {
-      // Get user's active issues
-      const activeIssues = await db.issue.findMany({
-        where: {
-          userId: userId,
-          returnDate: null
-        }
-      })
+      const { data: active } = await supabase
+        .from('borrow_records')
+        .select('id, due_date, status')
+        .eq('user_id', userId)
+        .eq('status', 'BORROWED')
 
-      stats.issuedBooks = activeIssues.length
+      stats.issuedBooks = active?.length ?? 0
+      stats.overdueBooks = active?.filter(r => r.due_date < now).length ?? 0
 
-      // Get overdue books
-      stats.overdueBooks = activeIssues.filter(issue => issue.dueDate < now).length
+      const { data: fines } = await supabase
+        .from('fines')
+        .select('amount')
+        .eq('user_id', userId)
+        .eq('status', 'PENDING')
 
-      // Get total fines
-      const fines = await db.fine.findMany({
-        where: {
-          userId: userId,
-          status: 'PENDING'
-        }
-      })
+      stats.fines = fines?.reduce((sum, f) => sum + Number(f.amount), 0) ?? 0
 
-      stats.fines = fines.reduce((sum, fine) => sum + fine.amount, 0)
+    } 
+    // Logic for Admin or Librarian (Staff who manage books)
+    else if (role === 'ADMIN' || role === 'LIBRARIAN') {
+      const { count: totalBooks } = await supabase
+        .from('books')
+        .select('id', { count: 'exact', head: true })
+      stats.totalBooks = totalBooks ?? 0
 
-    } else if (role === 'LIBRARIAN' || role === 'ADMIN') {
-      // Get total books
-      const books = await db.book.findMany()
-      stats.totalBooks = books.length
+      const { data: active } = await supabase
+        .from('borrow_records')
+        .select('id, due_date')
+        .eq('status', 'BORROWED')
 
-      // Get active issues
-      const activeIssues = await db.issue.findMany({
-        where: { returnDate: null }
-      })
-      stats.issuedBooks = activeIssues.length
+      stats.issuedBooks = active?.length ?? 0
+      stats.overdueBooks = active?.filter(r => r.due_date < now).length ?? 0
 
-      // Get overdue books
-      stats.overdueBooks = activeIssues.filter(issue => issue.dueDate < now).length
+      const { data: fines } = await supabase
+        .from('fines')
+        .select('amount')
+        .eq('status', 'PENDING')
 
-      // Get total pending fines
-      const fines = await db.fine.findMany({
-        where: { status: 'PENDING' }
-      })
-      stats.fines = fines.reduce((sum, fine) => sum + fine.amount, 0)
+      stats.fines = fines?.reduce((sum, f) => sum + Number(f.amount), 0) ?? 0
     }
 
     return NextResponse.json(stats)
-
   } catch (error) {
     console.error('Dashboard stats error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

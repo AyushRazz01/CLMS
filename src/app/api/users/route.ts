@@ -1,89 +1,60 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import { createAdminClient } from '@/lib/supabase/admin'
 
-const prisma = new PrismaClient()
-
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        branch: true,
-        year: true,
-        semester: true,
-        phone: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
+    const supabase = createAdminClient()
 
-    return NextResponse.json(users)
+    const { data: profiles, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+
+    return NextResponse.json(profiles ?? [])
   } catch (error) {
     console.error('Error fetching users:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch users' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { name, email, password, role, branch, year, semester, phone } = body
+    const { name, email, password, role, university_id, branch, year, semester } = await request.json()
+    const supabase = createAdminClient()
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
+    const { data, error } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { full_name: name },
     })
 
-    if (existingUser) {
-      return NextResponse.json(
-        { error: 'User with this email already exists' },
-        { status: 400 }
-      )
+    if (error) {
+      if (error.message.includes('already registered')) {
+        return NextResponse.json({ error: 'User with this email already exists' }, { status: 400 })
+      }
+      throw error
     }
 
-    // Hash password (you should use bcrypt in production)
-    const hashedPassword = password // In production, hash this
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ 
+        full_name: name, 
+        role: role ?? 'STUDENT', 
+        university_id: university_id ?? null,
+        branch: branch ?? null,
+        year: year ? parseInt(year) : null,
+        semester: semester ? parseInt(semester) : null
+      })
+      .eq('id', data.user.id)
 
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role,
-        branch,
-        year,
-        semester,
-        phone,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        branch: true,
-        year: true,
-        semester: true,
-        phone: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    })
+    if (updateError) throw updateError
 
-    return NextResponse.json(user, { status: 201 })
+    return NextResponse.json({ id: data.user.id, email, name, role }, { status: 201 })
   } catch (error) {
     console.error('Error creating user:', error)
-    return NextResponse.json(
-      { error: 'Failed to create user' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to create user' }, { status: 500 })
   }
 }

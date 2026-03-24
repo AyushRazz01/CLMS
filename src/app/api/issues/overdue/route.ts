@@ -1,46 +1,27 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { NextResponse } from 'next/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function GET() {
   try {
-    const now = new Date()
-    
-    const overdueIssues = await db.issue.findMany({
-      where: {
-        dueDate: {
-          lt: now
-        },
-        status: 'ISSUED'
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true
-          }
-        },
-        book: {
-          select: {
-            id: true,
-            title: true,
-            author: true,
-            isbn: true
-          }
-        }
-      },
-      orderBy: {
-        dueDate: 'asc'
-      }
-    })
+    const supabase = createAdminClient()
+    const now = new Date().toISOString()
 
-    return NextResponse.json(overdueIssues)
+    const { data, error } = await supabase
+      .from('borrow_records')
+      .select(`
+        *,
+        profiles:user_id ( id, full_name, email, role ),
+        books:book_id ( id, title, author )
+      `)
+      .eq('status', 'BORROWED')
+      .lt('due_date', now)
+      .order('due_date', { ascending: true })
+
+    if (error) throw error
+
+    return NextResponse.json(data ?? [])
   } catch (error) {
     console.error('Error fetching overdue issues:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch overdue issues' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to fetch overdue issues' }, { status: 500 })
   }
 }
