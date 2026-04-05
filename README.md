@@ -2,7 +2,6 @@
 
 # 🌐 Live Demo
 Want to see CLMS-UI? [Check it out here] -> https://ayush-razz-clms.vercel.app/
-
 This scaffold provides a robust foundation built with:
 
 ### 🎯 Core Framework
