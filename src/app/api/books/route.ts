@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from('books')
-      .select('*, categories(id, name)')
+      .select('*, category:categories(id, name)')
       .order('title', { ascending: true })
 
     if (genre && genre !== 'all') {
@@ -56,6 +56,11 @@ export async function POST(request: NextRequest) {
         cover_url: body.cover_url ?? null,
         summary: body.summary ?? null,
         category_id: body.category_id ?? null,
+        isbn: body.isbn ?? null,
+        edition: body.edition ?? null,
+        publisher: body.publisher ?? null,
+        published_year: body.published_year ?? null,
+        rack_no: body.rack_no ?? null,
       })
       .select()
       .single()

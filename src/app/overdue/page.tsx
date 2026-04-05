@@ -11,7 +11,7 @@ interface OverdueIssue {
   id: string
   user: {
     id: string
-    name: string
+    full_name: string
     email: string
     role: string
   }
@@ -21,8 +21,8 @@ interface OverdueIssue {
     author: string
     isbn: string
   }
-  issueDate: string
-  dueDate: string
+  borrow_date: string
+  due_date: string
   status: string
 }
 
@@ -139,7 +139,7 @@ export default function OverduePage() {
                 </div>
                 <div className="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
                   <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                    {Math.max(...overdueIssues.map(issue => calculateDaysOverdue(issue.dueDate)), 0)}
+                    {Math.max(...overdueIssues.map(issue => calculateDaysOverdue(issue.due_date)), 0)}
                   </div>
                   <div className="text-sm text-slate-600 dark:text-slate-400">
                     Max Days Overdue
@@ -159,7 +159,7 @@ export default function OverduePage() {
 
           <div className="grid gap-4">
             {overdueIssues.map((issue) => {
-              const daysOverdue = calculateDaysOverdue(issue.dueDate)
+              const daysOverdue = calculateDaysOverdue(issue.due_date)
               
               return (
                 <Card key={issue.id} className="border-l-4 border-l-red-500">
@@ -181,23 +181,11 @@ export default function OverduePage() {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-3">
-                          <User className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                          <div>
-                            <p className="text-sm font-medium text-slate-900 dark:text-white">
-                              {issue.user.name}
-                            </p>
-                            <p className="text-xs text-slate-600 dark:text-slate-400">
-                              {issue.user.email} • {issue.user.role}
-                            </p>
-                          </div>
-                        </div>
-
                         <div className="flex items-center gap-4">
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4 text-slate-600 dark:text-slate-400" />
                             <span className="text-sm text-slate-600 dark:text-slate-400">
-                              Due: {new Date(issue.dueDate).toLocaleDateString()}
+                              Due: {new Date(issue.due_date).toLocaleDateString()}
                             </span>
                           </div>
                           <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">

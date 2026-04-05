@@ -10,8 +10,8 @@ export async function GET(request: NextRequest) {
       .from('borrow_records')
       .select(`
         *,
-        profiles:user_id ( id, full_name, email, role ),
-        books:book_id ( id, title, author )
+        user:user_id ( id, full_name, email, role ),
+        book:book_id ( id, title, author, isbn )
       `)
       .order('borrow_date', { ascending: false })
 

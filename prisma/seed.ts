@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client'
-import bcrypt from 'bcryptjs'
+import { createAdminClient } from '../src/lib/supabase/admin'
 
 const prisma = new PrismaClient()
 
@@ -68,11 +68,11 @@ async function main() {
       author: 'Joshua Bloch',
       edition: '3rd',
       publisher: 'Addison-Wesley',
-      publishedYear: 2017,
-      quantity: 5,
-      available: 5,
-      rackNo: 'CS-101',
-      categoryId: categories[0].id,
+      published_year: 2017,
+      total_copies: 5,
+      available_copies: 5,
+      rack_no: 'CS-101',
+      category_id: categories[0].id,
       description: 'A comprehensive guide to Java programming best practices'
     },
     {
@@ -81,11 +81,11 @@ async function main() {
       author: 'Thomas H. Cormen',
       edition: '3rd',
       publisher: 'MIT Press',
-      publishedYear: 2009,
-      quantity: 8,
-      available: 6,
-      rackNo: 'CS-102',
-      categoryId: categories[0].id,
+      published_year: 2009,
+      total_copies: 8,
+      available_copies: 6,
+      rack_no: 'CS-102',
+      category_id: categories[0].id,
       description: 'The definitive introduction to algorithm design and analysis'
     },
     {
@@ -94,11 +94,11 @@ async function main() {
       author: 'Brian W. Kernighan',
       edition: '2nd',
       publisher: 'Prentice Hall',
-      publishedYear: 1988,
-      quantity: 10,
-      available: 8,
-      rackNo: 'CS-103',
-      categoryId: categories[0].id,
+      published_year: 1988,
+      total_copies: 10,
+      available_copies: 8,
+      rack_no: 'CS-103',
+      category_id: categories[0].id,
       description: 'The classic introduction to C programming'
     },
     {
@@ -107,11 +107,11 @@ async function main() {
       author: 'Eric Freeman',
       edition: '1st',
       publisher: "O'Reilly Media",
-      publishedYear: 2004,
-      quantity: 6,
-      available: 6,
-      rackNo: 'CS-104',
-      categoryId: categories[0].id,
+      published_year: 2004,
+      total_copies: 6,
+      available_copies: 6,
+      rack_no: 'CS-104',
+      category_id: categories[0].id,
       description: 'A brain-friendly guide to design patterns'
     },
     {
@@ -120,11 +120,11 @@ async function main() {
       author: 'Erich Gamma',
       edition: '1st',
       publisher: 'Addison-Wesley',
-      publishedYear: 1994,
-      quantity: 4,
-      available: 4,
-      rackNo: 'CS-105',
-      categoryId: categories[0].id,
+      published_year: 1994,
+      total_copies: 4,
+      available_copies: 4,
+      rack_no: 'CS-105',
+      category_id: categories[0].id,
       description: 'Elements of Reusable Object-Oriented Software'
     },
     {
@@ -133,11 +133,11 @@ async function main() {
       author: 'Shigley',
       edition: '10th',
       publisher: 'McGraw-Hill',
-      publishedYear: 2014,
-      quantity: 5,
-      available: 5,
-      rackNo: 'ME-101',
-      categoryId: categories[1].id,
+      published_year: 2014,
+      total_copies: 5,
+      available_copies: 5,
+      rack_no: 'ME-101',
+      category_id: categories[1].id,
       description: 'Comprehensive guide to mechanical engineering design'
     },
     {
@@ -146,11 +146,11 @@ async function main() {
       author: 'J.L. Meriam',
       edition: '7th',
       publisher: 'Wiley',
-      publishedYear: 2011,
-      quantity: 6,
-      available: 6,
-      rackNo: 'ME-102',
-      categoryId: categories[1].id,
+      published_year: 2011,
+      total_copies: 6,
+      available_copies: 6,
+      rack_no: 'ME-102',
+      category_id: categories[1].id,
       description: 'Fundamentals of static mechanics'
     },
     {
@@ -159,11 +159,11 @@ async function main() {
       author: 'Erwin Kreyszig',
       edition: '10th',
       publisher: 'Wiley',
-      publishedYear: 2011,
-      quantity: 7,
-      available: 7,
-      rackNo: 'MATH-101',
-      categoryId: categories[2].id,
+      published_year: 2011,
+      total_copies: 7,
+      available_copies: 7,
+      rack_no: 'MATH-101',
+      category_id: categories[2].id,
       description: 'Comprehensive mathematics for engineers'
     },
     {
@@ -172,11 +172,11 @@ async function main() {
       author: 'J.L. Meriam',
       edition: '7th',
       publisher: 'Wiley',
-      publishedYear: 2012,
-      quantity: 5,
-      available: 5,
-      rackNo: 'ME-103',
-      categoryId: categories[1].id,
+      published_year: 2012,
+      total_copies: 5,
+      available_copies: 5,
+      rack_no: 'ME-103',
+      category_id: categories[1].id,
       description: 'Fundamentals of dynamics in mechanics'
     },
     {
@@ -185,11 +185,11 @@ async function main() {
       author: 'Richard Feynman',
       edition: '2nd',
       publisher: 'Addison-Wesley',
-      publishedYear: 2005,
-      quantity: 4,
-      available: 4,
-      rackNo: 'PHY-101',
-      categoryId: categories[3].id,
+      published_year: 2005,
+      total_copies: 4,
+      available_copies: 4,
+      rack_no: 'PHY-101',
+      category_id: categories[3].id,
       description: 'The classic physics lectures by Richard Feynman'
     },
     {
@@ -198,11 +198,11 @@ async function main() {
       author: 'Robert C. Martin',
       edition: '1st',
       publisher: 'Prentice Hall',
-      publishedYear: 2008,
-      quantity: 6,
-      available: 6,
-      rackNo: 'CS-106',
-      categoryId: categories[0].id,
+      published_year: 2008,
+      total_copies: 6,
+      available_copies: 6,
+      rack_no: 'CS-106',
+      category_id: categories[0].id,
       description: 'A handbook of agile software craftsmanship'
     },
     {
@@ -211,11 +211,11 @@ async function main() {
       author: 'Martin Fowler',
       edition: '2nd',
       publisher: 'Addison-Wesley',
-      publishedYear: 2019,
-      quantity: 5,
-      available: 5,
-      rackNo: 'CS-107',
-      categoryId: categories[0].id,
+      published_year: 2019,
+      total_copies: 5,
+      available_copies: 5,
+      rack_no: 'CS-107',
+      category_id: categories[0].id,
       description: 'Improving the design of existing code'
     },
     {
@@ -224,11 +224,11 @@ async function main() {
       author: 'Harper Lee',
       edition: '1st',
       publisher: 'Harper Perennial',
-      publishedYear: 2006,
-      quantity: 3,
-      available: 3,
-      rackNo: 'LIT-101',
-      categoryId: categories[4].id,
+      published_year: 2006,
+      total_copies: 3,
+      available_copies: 3,
+      rack_no: 'LIT-101',
+      category_id: categories[4].id,
       description: 'A classic American novel'
     },
     {
@@ -237,11 +237,11 @@ async function main() {
       author: 'George Orwell',
       edition: '1st',
       publisher: 'Signet Classic',
-      publishedYear: 1950,
-      quantity: 4,
-      available: 4,
-      rackNo: 'LIT-102',
-      categoryId: categories[4].id,
+      published_year: 1950,
+      total_copies: 4,
+      available_copies: 4,
+      rack_no: 'LIT-102',
+      category_id: categories[4].id,
       description: 'A dystopian social science fiction novel'
     },
     {
@@ -250,11 +250,11 @@ async function main() {
       author: 'Eric Ries',
       edition: '1st',
       publisher: 'Currency',
-      publishedYear: 2011,
-      quantity: 5,
-      available: 5,
-      rackNo: 'MGMT-101',
-      categoryId: categories[5].id,
+      published_year: 2011,
+      total_copies: 5,
+      available_copies: 5,
+      rack_no: 'MGMT-101',
+      category_id: categories[5].id,
       description: 'How Today\'s Entrepreneurs Use Continuous Innovation'
     }
   ]
@@ -271,62 +271,66 @@ async function main() {
 
   console.log(`Created ${createdBooks.length} books`)
 
-  // Create sample users
-  const hashedPassword = await bcrypt.hash('password123', 10)
+  // Create sample users via Supabase Auth Admin
+  const adminClient = createAdminClient()
+  const password = 'password123'
 
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@clms.edu' },
-    update: {},
-    create: {
-      name: 'Admin User',
+  const sampleUsers = [
+    {
       email: 'admin@clms.edu',
-      password: hashedPassword,
-      role: 'ADMIN'
-    }
-  })
-
-  const librarian = await prisma.user.upsert({
-    where: { email: 'librarian@clms.edu' },
-    update: {},
-    create: {
-      name: 'John Librarian',
+      full_name: 'Admin User',
+      role: 'ADMIN',
+      university_id: 'ADMIN001'
+    },
+    {
       email: 'librarian@clms.edu',
-      password: hashedPassword,
-      role: 'LIBRARIAN'
-    }
-  })
-
-  const student = await prisma.user.upsert({
-    where: { email: 'student@clms.edu' },
-    update: {},
-    create: {
-      name: 'Jane Student',
+      full_name: 'John Librarian',
+      role: 'LIBRARIAN',
+      university_id: 'LIB001'
+    },
+    {
       email: 'student@clms.edu',
-      password: hashedPassword,
+      full_name: 'Jane Student',
       role: 'STUDENT',
+      university_id: 'STU001',
       branch: 'CSE',
       year: 3,
       semester: 5
-    }
-  })
-
-  const faculty = await prisma.user.upsert({
-    where: { email: 'faculty@clms.edu' },
-    update: {},
-    create: {
-      name: 'Dr. Smith',
+    },
+    {
       email: 'faculty@clms.edu',
-      password: hashedPassword,
+      full_name: 'Dr. Smith',
       role: 'FACULTY',
+      university_id: 'FAC001',
       branch: 'CSE'
     }
-  })
+  ]
 
-  console.log(`Created sample users`)
-  // console.log('Admin: admin@clms.edu / password123')
-  // console.log('Librarian: librarian@clms.edu / password123')
-  // console.log('Student: student@clms.edu / password123')
-  // console.log('Faculty: faculty@clms.edu / password123')
+  for (const user of sampleUsers) {
+    const { email, full_name, ...metadata } = user
+    
+    console.log(`Creating/Seeding user: ${email}`)
+    
+    const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        full_name,
+        ...metadata
+      }
+    })
+
+    if (authError) {
+      if (authError.message.includes('already registered')) {
+        console.log(`User ${email} already exists in auth.`)
+      } else {
+        console.error(`Error creating auth user ${email}:`, authError.message)
+      }
+    } else {
+      console.log(`Successfully created auth user: ${email}`)
+    }
+  }
 
   console.log('Database seeding completed successfully!')
 }

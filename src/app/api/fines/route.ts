@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
       .from('fines')
       .select(`
         *,
-        profiles:user_id ( id, full_name, email, role )
+        user:user_id ( id, full_name, email, role )
       `)
       .order('created_at', { ascending: false })
 

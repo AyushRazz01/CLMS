@@ -13,17 +13,17 @@ import { toast } from '@/hooks/use-toast'
 
 interface Issue {
   id: string
-  userId: string
-  bookId: string
-  issueDate: string
-  dueDate: string
-  returnDate?: string
+  user_id: string
+  book_id: string
+  borrow_date: string
+  due_date: string
+  return_date?: string
   fine: number
-  finePaid: boolean
-  status: string
+  fine_paid: boolean
+  status: 'BORROWED' | 'RETURNED' | 'OVERDUE'
   remarks?: string
   user: {
-    name: string
+    full_name: string
     email: string
     role: string
   }
@@ -31,7 +31,7 @@ interface Issue {
     title: string
     author: string
     isbn: string
-    rackNo?: string
+    rack_no?: string
   }
 }
 
@@ -66,7 +66,7 @@ export default function IssuesPage() {
       filtered = filtered.filter(issue =>
         issue.book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         issue.book.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        issue.user.name.toLowerCase().includes(searchQuery.toLowerCase())
+        issue.user.full_name.toLowerCase().includes(searchQuery.toLowerCase())
       )
     }
 
@@ -287,7 +287,7 @@ export default function IssuesPage() {
                           <td className="px-6 py-4">
                             <div>
                               <div className="text-sm font-medium text-slate-900 dark:text-white">
-                                {issue.user.name}
+                                {issue.user.full_name}
                               </div>
                               <div className="text-sm text-slate-500">
                                 {issue.user.role}
@@ -296,31 +296,26 @@ export default function IssuesPage() {
                           </td>
                           <td className="px-6 py-4">
                             <div className="text-sm text-slate-900 dark:text-white">
-                              {new Date(issue.issueDate).toLocaleDateString()}
+                              {new Date(issue.borrow_date).toLocaleDateString()}
                             </div>
                           </td>
                           <td className="px-6 py-4">
                             <div className="text-sm text-slate-900 dark:text-white">
-                              {new Date(issue.dueDate).toLocaleDateString()}
+                              {new Date(issue.due_date).toLocaleDateString()}
                             </div>
-                            {new Date(issue.dueDate) < new Date() && issue.status !== 'RETURNED' && (
+                            {new Date(issue.due_date) < new Date() && issue.status !== 'RETURNED' && (
                               <div className="text-xs text-red-600 dark:text-red-400">
                                 Overdue
                               </div>
                             )}
                           </td>
                           <td className="px-6 py-4">
-                            {getStatusBadge(issue.status, issue.dueDate)}
+                            {getStatusBadge(issue.status, issue.due_date)}
                           </td>
                           <td className="px-6 py-4">
                             <div className="text-sm text-slate-900 dark:text-white">
-                              ${issue.fine.toFixed(2)}
+                              ${(issue.fine || 0).toFixed(2)}
                             </div>
-                            {issue.fine > 0 && !issue.finePaid && (
-                              <div className="text-xs text-red-600 dark:text-red-400">
-                                Unpaid
-                              </div>
-                            )}
                           </td>
                           {(user.role === 'LIBRARIAN' || user.role === 'ADMIN') && (
                             <td className="px-6 py-4">

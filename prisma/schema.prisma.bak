@@ -1,0 +1,140 @@
+// Smart College Library Management System (CLMS) Database Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+  schemas   = ["public", "auth"]
+}
+
+// Enum for user roles
+enum UserRole {
+  STUDENT
+  FACULTY
+  LIBRARIAN
+  ADMIN
+
+  @@schema("public")
+}
+
+// Enum for fine status
+enum FineStatus {
+  PENDING
+  PAID
+  WAIVED
+
+  @@schema("public")
+}
+
+// Enum for book status
+enum BookStatus {
+  AVAILABLE
+  ISSUED
+  LOST
+  DAMAGED
+  MAINTENANCE
+
+  @@schema("public")
+}
+
+// User model for all system users
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String // Hashed password
+  role      UserRole @default(STUDENT)
+  branch    String? // For students and faculty
+  year      Int? // For students
+  semester  Int? // For students
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  issues ItemIssue[]
+  fines  Fine[]
+
+  @@schema("public")
+}
+
+// Category model for organizing books
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  books Book[]
+
+  @@schema("public")
+}
+
+// Book model
+model Book {
+  id            String      @id @default(cuid())
+  isbn          String      @unique
+  title         String
+  author        String
+  edition       String?
+  publisher     String?
+  publishedYear Int?
+  description   String?
+  quantity      Int         @default(1)
+  available     Int         @default(1)
+  rackNo        String?
+  categoryId    String
+  coverImage    String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  // Relations
+  category      Category    @relation(fields: [categoryId], references: [id])
+  issues        ItemIssue[]
+
+  @@schema("public")
+}
+
+// Issue model for tracking book issues and returns
+model ItemIssue {
+  id         String     @id @default(cuid())
+  userId     String
+  bookId     String
+  issueDate  DateTime   @default(now())
+  dueDate    DateTime
+  returnDate DateTime?
+  fine       Float      @default(0)
+  finePaid   Boolean    @default(false)
+  status     BookStatus @default(AVAILABLE)
+  remarks    String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  // Relations
+  user       User       @relation(fields: [userId], references: [id])
+  book       Book       @relation(fields: [bookId], references: [id])
+
+  @@map("Issue")
+  @@schema("public")
+}
+
+// Fine model for tracking user fines
+model Fine {
+  id        String     @id @default(cuid())
+  userId    String
+  issueId   String
+  amount    Float
+  reason    String     @default("Overdue fine")
+  status    FineStatus @default(PENDING)
+  paidDate  DateTime?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  // Relations
+  user      User       @relation(fields: [userId], references: [id])
+
+  @@schema("public")
+}

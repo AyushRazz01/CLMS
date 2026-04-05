@@ -19,12 +19,19 @@ export async function POST(request: NextRequest) {
 
     let userId: string
 
-    // Create user in Supabase Auth
+    // Create user in Supabase Auth with full metadata
     const { data: userData, error: createError } = await adminClient.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
-      user_metadata: { full_name: name },
+      user_metadata: { 
+        full_name: name,
+        role: resolvedRole,
+        university_id: university_id ?? null,
+        branch: branch ?? null,
+        year: year ?? null,
+        semester: semester ?? null,
+      },
     })
 
     if (createError) {
@@ -35,23 +42,6 @@ export async function POST(request: NextRequest) {
     }
 
     userId = userData.user.id
-
-    // Upsert profile with ALL fields
-    const { error: upsertError } = await adminClient
-      .from('profiles')
-      .upsert({
-        id: userId,
-        full_name: name,
-        email,
-        role: resolvedRole as any,
-        university_id: university_id ?? null,
-        branch: branch ?? null,
-        year: year ? parseInt(year) : null,
-        semester: semester ? parseInt(semester) : null,
-        status: 'APPROVED', // Auto-approve for now based on previous app logic
-      })
-
-    if (upsertError) throw upsertError
 
     // Automatically sign in the user after registration so they have a session
     const supabase = await createClient()

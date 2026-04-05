@@ -6,12 +6,12 @@ export async function GET() {
     const supabase = createAdminClient()
     const now = new Date().toISOString()
 
-    const { data, error } = await supabase
+    const { data: records, error } = await supabase
       .from('borrow_records')
       .select(`
         *,
-        profiles:user_id ( id, full_name, email, role ),
-        books:book_id ( id, title, author )
+        user:user_id ( id, full_name, email, role ),
+        book:book_id ( id, title, author, isbn )
       `)
       .eq('status', 'BORROWED')
       .lt('due_date', now)
@@ -19,7 +19,7 @@ export async function GET() {
 
     if (error) throw error
 
-    return NextResponse.json(data ?? [])
+    return NextResponse.json(records ?? [])
   } catch (error) {
     console.error('Error fetching overdue issues:', error)
     return NextResponse.json({ error: 'Failed to fetch overdue issues' }, { status: 500 })

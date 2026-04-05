@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       where: { id: fineId },
       data: {
         status: 'PAID',
-        paidDate: new Date()
+        paid_date: new Date()
       }
     })
 

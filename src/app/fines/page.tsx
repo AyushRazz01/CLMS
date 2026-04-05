@@ -13,20 +13,20 @@ import { toast } from '@/hooks/use-toast'
 
 interface Fine {
   id: string
-  userId: string
-  issueId: string
+  user_id: string
+  borrow_record_id?: string
   amount: number
   reason: string
   status: 'PENDING' | 'PAID' | 'WAIVED'
-  paidDate?: string
-  createdAt: string
-  updatedAt: string
+  paid_date?: string
+  created_at: string
+  updated_at: string
   user: {
-    name: string
+    full_name: string
     email: string
     role: string
   }
-  issue: {
+  borrow_record?: {
     book: {
       title: string
       author: string
@@ -64,9 +64,9 @@ export default function FinesPage() {
 
     if (searchQuery) {
       filtered = filtered.filter(fine =>
-        fine.issue.book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        fine.issue.book.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        fine.user.name.toLowerCase().includes(searchQuery.toLowerCase())
+        fine.borrow_record?.book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        fine.borrow_record?.book.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        fine.user.full_name.toLowerCase().includes(searchQuery.toLowerCase())
       )
     }
 
@@ -364,22 +364,26 @@ export default function FinesPage() {
                       {filteredFines.map((fine) => (
                         <tr key={fine.id} className="hover:bg-slate-50 dark:hover:bg-slate-700">
                           <td className="px-6 py-4">
-                            <div>
-                              <div className="text-sm font-medium text-slate-900 dark:text-white">
-                                {fine.issue.book.title}
+                            {fine.borrow_record ? (
+                              <div>
+                                <div className="text-sm font-medium text-slate-900 dark:text-white">
+                                  {fine.borrow_record.book.title}
+                                </div>
+                                <div className="text-sm text-slate-500">
+                                  {fine.borrow_record.book.author}
+                                </div>
+                                <div className="text-xs text-slate-400">
+                                  ISBN: {fine.borrow_record.book.isbn}
+                                </div>
                               </div>
-                              <div className="text-sm text-slate-500">
-                                {fine.issue.book.author}
-                              </div>
-                              <div className="text-xs text-slate-400">
-                                ISBN: {fine.issue.book.isbn}
-                              </div>
-                            </div>
+                            ) : (
+                              <div className="text-sm text-slate-500 italic">General Fine</div>
+                            )}
                           </td>
                           <td className="px-6 py-4">
                             <div>
                               <div className="text-sm font-medium text-slate-900 dark:text-white">
-                                {fine.user.name}
+                                {fine.user.full_name}
                               </div>
                               <div className="text-sm text-slate-500">
                                 {fine.user.role}
@@ -404,11 +408,11 @@ export default function FinesPage() {
                           </td>
                           <td className="px-6 py-4">
                             <div className="text-sm text-slate-900 dark:text-white">
-                              {new Date(fine.createdAt).toLocaleDateString()}
+                              {new Date(fine.created_at).toLocaleDateString()}
                             </div>
-                            {fine.paidDate && (
+                            {fine.paid_date && (
                               <div className="text-xs text-slate-500">
-                                Paid: {new Date(fine.paidDate).toLocaleDateString()}
+                                Paid: {new Date(fine.paid_date).toLocaleDateString()}
                               </div>
                             )}
                           </td>
