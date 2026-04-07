@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function POST(request: NextRequest) {
@@ -7,6 +8,15 @@ export async function POST(request: NextRequest) {
 
     if (!issueId) {
       return NextResponse.json({ error: 'Issue ID is required' }, { status: 400 })
+    }
+
+    // Check permissions (Only Librarian/Admin can return books)
+    const supabaseClient = await createClient()
+    const { data: { user } } = await supabaseClient.auth.getUser()
+    const userRole = user?.user_metadata?.role || 'STUDENT'
+
+    if (userRole !== 'LIBRARIAN' && userRole !== 'ADMIN') {
+      return NextResponse.json({ error: 'Forbidden: Only librarians can return books' }, { status: 403 })
     }
 
     const supabase = createAdminClient()

@@ -165,8 +165,8 @@ export default function BookDetailsPage() {
   const canIssue = () => {
     if (!book || !user) return false
     if (book.available === 0) return false
-    if (user.role === 'LIBRARIAN' || user.role === 'ADMIN') return false
-    return true
+    // Librarians issue books via the management panel
+    return false 
   }
 
   const getIssueLimit = () => {
@@ -323,31 +323,36 @@ export default function BookDetailsPage() {
                   </div>
                 </div>
 
-                {canIssue() ? (
                   <>
-                    <Separator />
-                    <Button
-                      className="w-full"
-                      size="lg"
-                      onClick={handleIssueBook}
-                      disabled={isIssuing || book.available === 0}
-                    >
-                      {isIssuing ? 'Issuing...' : 'Issue This Book'}
-                    </Button>
-                    <p className="text-xs text-center text-muted-foreground">
-                      Issue limit: {getIssueLimit()} books at a time
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    {user && (user.role === 'LIBRARIAN' || user.role === 'ADMIN') && (
-                      <div className="text-center py-4 text-muted-foreground text-sm">
-                        <AlertCircle className="h-8 w-8 mx-auto mb-2" />
-                        Librarians and Admins should use the issue panel to issue books.
+                    {(user?.role === 'STUDENT' || user?.role === 'FACULTY') && (
+                       <div className="text-center py-4 text-slate-500 text-sm italic">
+                         Contact the librarian to issue this book.
+                       </div>
+                    )}
+                    {(user?.role === 'LIBRARIAN' || user?.role === 'ADMIN') && (
+                      <div className="space-y-3 pt-4">
+                        <Button className="w-full" onClick={() => router.push(`/issues?bookId=${book.id}`)}>
+                          Issue This Book
+                        </Button>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button variant="outline" onClick={() => router.push(`/books/${book.id}/edit`)}>
+                            Edit Details
+                          </Button>
+                          <Button variant="destructive" onClick={async () => {
+                            if (confirm('Are you sure you want to delete this book?')) {
+                              const resp = await fetch(`/api/books/${book.id}`, { method: 'DELETE' });
+                              if (resp.ok) {
+                                toast({ title: 'Deleted', description: 'Book removed from library' });
+                                router.push('/books');
+                              }
+                            }
+                          }}>
+                            Delete
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </>
-                )}
 
                 {book.available === 0 && (
                   <div className="text-center py-2 text-destructive text-sm font-medium">

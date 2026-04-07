@@ -8,7 +8,8 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Sidebar } from '@/components/sidebar'
-import { BookMarked, Calendar, User, Search, AlertCircle, CheckCircle } from 'lucide-react'
+import { BookMarked, Calendar, User, Search, AlertCircle, CheckCircle, Plus } from 'lucide-react'
+import { IssueBookModal } from '@/components/issues/IssueBookModal'
 import { toast } from '@/hooks/use-toast'
 
 interface Issue {
@@ -186,6 +187,11 @@ export default function IssuesPage() {
                   : 'Manage all book issues and returns'
                 }
               </p>
+            </div>
+            <div className="flex items-center gap-4">
+              {(user.role === 'LIBRARIAN' || user.role === 'ADMIN') && (
+                <IssueBookModal onSuccess={() => fetchIssues(user)} />
+              )}
             </div>
           </div>
 

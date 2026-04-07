@@ -29,6 +29,7 @@ export default function DashboardPage() {
     fines: 0,
     totalBooks: 0
   })
+  const [borrowedBooks, setBorrowedBooks] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [authError, setAuthError] = useState<string | null>(null)
 
@@ -74,6 +75,9 @@ export default function DashboardPage() {
           }
           setUser(userData)
           fetchDashboardStats(userData.id, userData.role)
+          if (userData.role === 'STUDENT' || userData.role === 'FACULTY') {
+            fetchBorrowedBooks(userData.id)
+          }
         }
       } catch (err) {
         console.error('Auth check error:', err)
@@ -96,6 +100,18 @@ export default function DashboardPage() {
       console.error('Failed to fetch stats:', error)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const fetchBorrowedBooks = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/issues?userId=${userId}`)
+      if (response.ok) {
+        const data = await response.json()
+        setBorrowedBooks(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch borrowed books:', error)
     }
   }
 
@@ -196,25 +212,20 @@ export default function DashboardPage() {
 
           {/* Stats Grid */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="bg-white dark:bg-slate-800 border-0 shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                  {user.role === 'STUDENT' || user.role === 'FACULTY' ? 'Issued Books' : 'Total Books'}
-                </CardTitle>
-                <div className="p-2 bg-blue-50 dark:bg-blue-900 rounded-lg">
-                  <BookMarked className="h-4 w-4 text-blue-600 dark:text-blue-300" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-slate-900 dark:text-white">{isLoading ? '-' : stats.issuedBooks}</div>
-                <p className="text-xs text-slate-500 mt-1">
-                  {user.role === 'STUDENT' || user.role === 'FACULTY'
-                    ? 'Currently borrowed'
-                    : 'In the library'
-                  }
-                </p>
-              </CardContent>
-            </Card>
+            {(user.role === 'STUDENT' || user.role === 'FACULTY') && (
+              <Card className="bg-white dark:bg-slate-800 border-0 shadow-sm">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">Issued Books</CardTitle>
+                  <div className="p-2 bg-blue-50 dark:bg-blue-900 rounded-lg">
+                    <BookMarked className="h-4 w-4 text-blue-600 dark:text-blue-300" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-slate-900 dark:text-white">{isLoading ? '-' : stats.issuedBooks}</div>
+                  <p className="text-xs text-slate-500 mt-1">Currently borrowed</p>
+                </CardContent>
+              </Card>
+            )}
 
             {(user.role === 'STUDENT' || user.role === 'FACULTY') && (
               <Card className="bg-white dark:bg-slate-800 border-0 shadow-sm">
@@ -247,33 +258,46 @@ export default function DashboardPage() {
             )}
 
             {(user.role === 'LIBRARIAN' || user.role === 'ADMIN') && (
-              <Card className="bg-white dark:bg-slate-800 border-0 shadow-sm">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">Total Available</CardTitle>
-                  <div className="p-2 bg-green-50 dark:bg-green-900 rounded-lg">
-                    <BookOpen className="h-4 w-4 text-green-600 dark:text-green-300" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-slate-900 dark:text-white">{isLoading ? '-' : stats.totalBooks}</div>
-                  <p className="text-xs text-slate-500 mt-1">Books in circulation</p>
-                </CardContent>
-              </Card>
-            )}
+              <>
+                <Card className="bg-white dark:bg-slate-800 border-0 shadow-sm border-l-4 border-purple-500">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">Active Issues</CardTitle>
+                    <div className="p-2 bg-purple-50 dark:bg-purple-900 rounded-lg">
+                      <Library className="h-4 w-4 text-purple-600 dark:text-purple-300" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-slate-900 dark:text-white">{isLoading ? '-' : stats.issuedBooks}</div>
+                    <p className="text-xs text-slate-500 mt-1">Currently issued</p>
+                  </CardContent>
+                </Card>
 
-            {(user.role === 'LIBRARIAN' || user.role === 'ADMIN') && (
-              <Card className="bg-white dark:bg-slate-800 border-0 shadow-sm">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">Active Issues</CardTitle>
-                  <div className="p-2 bg-purple-50 dark:bg-purple-900 rounded-lg">
-                    <Library className="h-4 w-4 text-purple-600 dark:text-purple-300" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-slate-900 dark:text-white">{isLoading ? '-' : stats.issuedBooks}</div>
-                  <p className="text-xs text-slate-500 mt-1">Currently issued</p>
-                </CardContent>
-              </Card>
+                <Card className="bg-white dark:bg-slate-800 border-0 shadow-sm border-l-4 border-green-500">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">Total Available</CardTitle>
+                    <div className="p-2 bg-green-50 dark:bg-green-900 rounded-lg">
+                      <BookOpen className="h-4 w-4 text-green-600 dark:text-green-300" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-slate-900 dark:text-white">{isLoading ? '-' : stats.totalBooks}</div>
+                    <p className="text-xs text-slate-500 mt-1">Books in circulation</p>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white dark:bg-slate-800 border-0 shadow-sm border-l-4 border-red-500">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">Overdue Books</CardTitle>
+                    <div className="p-2 bg-red-50 dark:bg-red-900 rounded-lg animate-pulse">
+                      <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-300" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-red-600 dark:text-red-400">{isLoading ? '-' : stats.overdueBooks}</div>
+                    <p className="text-xs text-slate-500 mt-1">Requires attention</p>
+                  </CardContent>
+                </Card>
+              </>
             )}
           </div>
 
@@ -323,15 +347,15 @@ export default function DashboardPage() {
                   </Button>
                 )}
 
-                {user.role === 'LIBRARIAN' && (
+                {(user.role === 'LIBRARIAN' || user.role === 'ADMIN') && (
                   <Button 
-                    variant="outline" 
-                    className="h-auto py-6 flex flex-col items-start justify-between border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
+                    className="h-auto py-6 flex flex-col items-start justify-between bg-amber-600 hover:bg-amber-700 text-white shadow-md transition-all active:scale-[0.98]"
+                    onClick={() => router.push('/fines')}
                   >
-                    <BookMarked className="h-6 w-6 mb-3 text-slate-600 dark:text-slate-400" />
+                    <DollarSign className="h-6 w-6 mb-3" />
                     <div>
-                      <span className="font-semibold block text-slate-900 dark:text-white">Issue / Return</span>
-                      <span className="text-sm text-slate-500">Process book transactions</span>
+                      <span className="font-semibold block">Fine Management</span>
+                      <span className="text-sm text-amber-100">Manage and issue penalties</span>
                     </div>
                   </Button>
                 )}
@@ -363,6 +387,78 @@ export default function DashboardPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Student Specific: My Borrowed Books */}
+          {(user.role === 'STUDENT' || user.role === 'FACULTY') && borrowedBooks.length > 0 && (
+            <Card className="bg-white dark:bg-slate-800 border-0 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold">My Borrowed Books</CardTitle>
+                <CardDescription>Track your current library items</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-md border border-slate-100 dark:border-slate-800 overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 uppercase text-xs">
+                      <tr>
+                        <th className="px-4 py-3 text-left">Book Name</th>
+                        <th className="px-4 py-3 text-left">Issue Date</th>
+                        <th className="px-4 py-3 text-left">Due Date</th>
+                        <th className="px-4 py-3 text-left">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {borrowedBooks.map((record) => {
+                        const isOverdue = new Date(record.due_date) < new Date() && record.status === 'BORROWED';
+                        return (
+                          <tr key={record.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/50">
+                            <td className="px-4 py-3 font-medium">{record.book?.title}</td>
+                            <td className="px-4 py-3">{new Date(record.borrow_date).toLocaleDateString()}</td>
+                            <td className="px-4 py-3">{new Date(record.due_date).toLocaleDateString()}</td>
+                            <td className="px-4 py-3">
+                              {isOverdue ? (
+                                <Badge variant="destructive" className="animate-pulse">Overdue</Badge>
+                              ) : (
+                                <Badge variant="default" className="bg-green-600">Issued</Badge>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Librarian Specific: System Oversight */}
+          {user.role === 'LIBRARIAN' && (
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card className="bg-white dark:bg-slate-800 border-0 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg font-semibold">Student Management</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-slate-500">Monitor student activities, book distributions, and fine records.</p>
+                  <Button className="w-full" variant="outline" onClick={() => router.push('/users')}>
+                    <Users className="h-4 w-4 mr-2" /> View All Students
+                  </Button>
+                </CardContent>
+              </Card>
+              <Card className="bg-white dark:bg-slate-800 border-0 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg font-semibold">Transaction Processing</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-slate-500">Quickly issue new books or process returns from students.</p>
+                  <div className="flex gap-2">
+                    <Button className="flex-1" onClick={() => router.push('/issues')}>Issue Book</Button>
+                    <Button className="flex-1" variant="outline" onClick={() => router.push('/issues')}>Return Book</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       </main>
     </div>

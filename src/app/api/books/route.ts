@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function GET(request: NextRequest) {
@@ -41,6 +42,16 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
+    
+    // Check permissions
+    const supabaseClient = await createClient()
+    const { data: { user } } = await supabaseClient.auth.getUser()
+    const userRole = user?.user_metadata?.role || 'STUDENT'
+
+    if (userRole !== 'LIBRARIAN' && userRole !== 'ADMIN') {
+      return NextResponse.json({ error: 'Forbidden: Students cannot create books' }, { status: 403 })
+    }
+
     const supabase = createAdminClient()
 
     const { data: book, error } = await supabase

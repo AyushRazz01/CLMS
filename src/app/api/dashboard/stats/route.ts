@@ -37,10 +37,10 @@ export async function GET(request: NextRequest) {
     } 
     // Logic for Admin or Librarian (Staff who manage books)
     else if (role === 'ADMIN' || role === 'LIBRARIAN') {
-      const { count: totalBooks } = await supabase
+      const { data: bookData } = await supabase
         .from('books')
-        .select('id', { count: 'exact', head: true })
-      stats.totalBooks = totalBooks ?? 0
+        .select('available_copies')
+      stats.totalBooks = bookData?.reduce((sum, b) => sum + Number(b.available_copies || 0), 0) ?? 0
 
       const { data: active } = await supabase
         .from('borrow_records')

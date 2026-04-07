@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -20,7 +20,8 @@ import {
   ChevronRight,
   User,
   AlertCircle,
-  DollarSign
+  DollarSign,
+  Bell
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -40,17 +41,20 @@ const navigation = {
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Browse Books', href: '/books', icon: Library },
     { name: 'My Issues', href: '/issues', icon: BookMarked },
+    { name: 'Notifications', href: '/notifications', icon: Bell },
   ],
   FACULTY: [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Browse Books', href: '/books', icon: Library },
     { name: 'My Issues', href: '/issues', icon: BookMarked },
+    { name: 'Notifications', href: '/notifications', icon: Bell },
   ],
   LIBRARIAN: [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Manage Books', href: '/books', icon: Library },
     { name: 'Issue/Return', href: '/issues', icon: BookMarked },
     { name: 'Overdue', href: '/overdue', icon: AlertCircle },
+    { name: 'Notifications', href: '/notifications', icon: Bell },
   ],
   ADMIN: [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -58,6 +62,7 @@ const navigation = {
     { name: 'All Issues', href: '/issues', icon: BookMarked },
     { name: 'Users', href: '/users', icon: Users },
     { name: 'Fines', href: '/fines', icon: DollarSign },
+    { name: 'Notifications', href: '/notifications', icon: Bell },
   ],
 }
 
@@ -93,6 +98,28 @@ export function Sidebar({ user }: SidebarProps) {
       default: return 'bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300'
     }
   }
+
+  const [unreadAlerts, setUnreadAlerts] = useState(0)
+
+  useEffect(() => {
+    const fetchNotificationCounts = async () => {
+      try {
+        const response = await fetch('/api/notifications')
+        if (response.ok) {
+          const data = await response.json()
+          const unreadCount = data.filter((n: any) => !n.is_read && (n.type === 'DANGER' || n.type === 'ALERT')).length
+          setUnreadAlerts(unreadCount)
+        }
+      } catch (error) {
+        console.error('Error fetching notification counts:', error)
+      }
+    }
+    
+    fetchNotificationCounts()
+    // Poll every minute for updates
+    const interval = setInterval(fetchNotificationCounts, 60000)
+    return () => clearInterval(interval)
+  }, [user.id])
 
   const userNav = navigation[user.role as keyof typeof navigation] || navigation.STUDENT
 
@@ -160,20 +187,49 @@ export function Sidebar({ user }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-        {userNav.map((item) => (
-          <Link
-            key={item.name}
-            href={item.href}
-            className={cn(
-              'flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-              'hover:bg-slate-100 dark:hover:bg-slate-800',
-              'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
-            )}
-          >
-            <item.icon className="h-5 w-5 flex-shrink-0" />
-            {!collapsed && <span>{item.name}</span>}
-          </Link>
-        ))}
+        {userNav.map((item) => {
+          const isNotification = item.name === 'Notifications'
+          const hasUnreadAlerts = isNotification && unreadAlerts > 0
+
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={cn(
+                'flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all group relative',
+                'hover:bg-slate-100 dark:hover:bg-slate-800',
+                'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100',
+                hasUnreadAlerts && 'bg-red-50/50 dark:bg-red-900/10'
+              )}
+            >
+              {/* Left-side alert indicator */}
+              {hasUnreadAlerts && (
+                <div className={cn(
+                  "absolute left-0 top-1.5 bottom-1.5 w-1 bg-red-500 rounded-r-full shadow-[2px_0_10px_rgba(239,68,68,0.4)]",
+                  collapsed && "w-1.5"
+                )} />
+              )}
+
+              <div className="flex items-center space-x-3">
+                <item.icon className={cn(
+                  "h-5 w-5 flex-shrink-0 transition-colors",
+                  hasUnreadAlerts ? "text-red-500 animate-pulse" : "group-hover:text-primary"
+                )} />
+                {!collapsed && <span>{item.name}</span>}
+              </div>
+
+              {!collapsed && isNotification && unreadAlerts > 0 && (
+                <Badge className="bg-red-500 hover:bg-red-600 text-[10px] h-4 min-w-[16px] px-1 flex items-center justify-center font-bold border-0 shadow-sm animate-in fade-in zoom-in duration-300">
+                  {unreadAlerts}
+                </Badge>
+              )}
+              
+              {collapsed && isNotification && unreadAlerts > 0 && (
+                <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-slate-900 animate-pulse shadow-sm" />
+              )}
+            </Link>
+          )
+        })}
       </nav>
 
       {/* Logout */}

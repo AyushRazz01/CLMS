@@ -12,10 +12,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
+    const toNull = (val: any) => (val === '' || val === undefined || val === null) ? null : val;
+
     const resolvedRole = VALID_ROLES.includes(role) ? role : 'STUDENT'
 
     // Use admin client for creation and upsert as it bypasses RLS
     const adminClient = createAdminClient()
+
+    // IF role is LIBRARIAN, check if one already exists
+    if (resolvedRole === 'LIBRARIAN') {
+      const { data: existingLibrarian, error: checkError } = await adminClient
+        .from('profiles')
+        .select('id')
+        .eq('role', 'LIBRARIAN')
+        .limit(1)
+        .single()
+
+      if (existingLibrarian) {
+        return NextResponse.json({ error: 'Librarian account already exists' }, { status: 400 })
+      }
+    }
 
     let userId: string
 
@@ -27,10 +43,10 @@ export async function POST(request: NextRequest) {
       user_metadata: { 
         full_name: name,
         role: resolvedRole,
-        university_id: university_id ?? null,
-        branch: branch ?? null,
-        year: year ?? null,
-        semester: semester ?? null,
+        university_id: toNull(university_id),
+        branch: toNull(branch),
+        year: toNull(year),
+        semester: toNull(semester),
       },
     })
 

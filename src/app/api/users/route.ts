@@ -7,7 +7,16 @@ export async function GET(_request: NextRequest) {
 
     const { data: profiles, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select(`
+        *,
+        borrow_records:borrow_records (
+          id, 
+          status, 
+          borrow_date, 
+          due_date,
+          book:book_id ( title )
+        )
+      `)
       .order('created_at', { ascending: false })
 
     if (error) throw error

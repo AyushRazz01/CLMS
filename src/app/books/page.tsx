@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Search, BookOpen, ArrowLeft, Grid3X3, List, Filter } from 'lucide-react'
+import { Search, BookOpen, ArrowLeft, Grid3X3, List, Filter, Plus } from 'lucide-react'
+import { AddBookModal } from '@/components/books/AddBookModal'
 import { toast } from '@/hooks/use-toast'
 
 interface Book {
@@ -135,6 +136,9 @@ export default function BooksPage() {
               </div>
             </div>
             <div className="flex items-center space-x-2">
+              {(user && (user.role === 'LIBRARIAN' || user.role === 'ADMIN')) && (
+                <AddBookModal onSuccess={() => fetchBooks()} />
+              )}
               <Button variant={viewMode === 'grid' ? 'default' : 'outline'} size="icon" onClick={() => setViewMode('grid')}>
                 <Grid3X3 className="h-4 w-4" />
               </Button>

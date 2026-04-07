@@ -6,6 +6,8 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
+  const userRole = user?.user_metadata?.role || 'STUDENT'
+
   // Protected routes (require authentication)
   const isProtectedRoute = 
     pathname.startsWith('/dashboard') || 
@@ -23,6 +25,21 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = '/'
     return NextResponse.redirect(url)
+  }
+
+  // RBAC checks
+  if (user) {
+    // Librarian-only routes
+    const isLibrarianRoute = 
+      pathname.startsWith('/users') || 
+      pathname.startsWith('/issues') || 
+      pathname.startsWith('/overdue')
+
+    if (isLibrarianRoute && userRole !== 'LIBRARIAN' && userRole !== 'ADMIN') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/dashboard'
+      return NextResponse.redirect(url)
+    }
   }
 
   if (isAuthRoute && user) {

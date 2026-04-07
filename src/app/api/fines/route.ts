@@ -27,3 +27,41 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+
+export async function POST(request: NextRequest) {
+  try {
+    const { userId, borrowRecordId, amount, reason } = await request.json()
+    const supabase = createAdminClient()
+
+    if (!userId || !amount) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    const { data: fine, error } = await supabase
+      .from('fines')
+      .insert({
+        user_id: userId,
+        borrow_record_id: borrowRecordId || null,
+        amount,
+        reason: reason || 'Overdue fine',
+        status: 'PENDING'
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+
+    // Create a notification for the student
+    await supabase.from('notifications').insert({
+      user_id: userId,
+      title: 'New Fine Issued',
+      message: `A fine of $${amount} has been issued: ${reason || 'Overdue fine'}.`,
+      type: 'ALERT'
+    })
+
+    return NextResponse.json(fine, { status: 201 })
+  } catch (error: any) {
+    console.error('Fine creation error:', error)
+    return NextResponse.json({ error: error.message || 'Failed to create fine' }, { status: 500 })
+  }
+}

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { BookOpen, User, Mail, Lock, GraduationCap } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
@@ -103,11 +104,11 @@ export default function AuthPage() {
 
     try {
       const userData: any = {
-        name: registerName,
-        email: registerEmail,
+        name: registerName.trim(),
+        email: registerEmail.trim(),
         password: registerPassword,
         role: registerRole,
-        university_id: registerUniversityId,
+        university_id: registerUniversityId?.trim() || null,
       }
 
       // Add student/faculty specific fields
@@ -116,8 +117,10 @@ export default function AuthPage() {
       }
 
       if (registerRole === 'STUDENT') {
-        userData.year = parseInt(registerYear)
-        userData.semester = parseInt(registerSemester)
+        const yearNum = parseInt(registerYear)
+        const semNum = parseInt(registerSemester)
+        userData.year = isNaN(yearNum) ? null : yearNum
+        userData.semester = isNaN(semNum) ? null : semNum
       }
 
       const response = await fetch('/api/auth/register', {
@@ -328,17 +331,25 @@ export default function AuthPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="register-role">Role</Label>
-                      <Select value={registerRole} onValueChange={setRegisterRole}>
-                        <SelectTrigger id="register-role">
-                          <SelectValue placeholder="Select your role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="STUDENT">Student</SelectItem>
-                          <SelectItem value="FACULTY">Faculty</SelectItem>
-                          <SelectItem value="LIBRARIAN">Librarian</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Label>Role</Label>
+                      <div className="flex items-center space-x-6 p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="role-student" 
+                            checked={registerRole === 'STUDENT'} 
+                            onCheckedChange={() => setRegisterRole('STUDENT')}
+                          />
+                          <Label htmlFor="role-student" className="font-normal cursor-pointer">Student</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="role-librarian" 
+                            checked={registerRole === 'LIBRARIAN'} 
+                            onCheckedChange={() => setRegisterRole('LIBRARIAN')}
+                          />
+                          <Label htmlFor="role-librarian" className="font-normal cursor-pointer">Librarian</Label>
+                        </div>
+                      </div>
                     </div>
 
                     {(registerRole === 'STUDENT' || registerRole === 'FACULTY') && (
