@@ -1,124 +1,143 @@
+# 📚 Smart CLMS — Modern Library Management Ecosystem
+
 # Welcome to College Library Management System 📖
 
 # 🌐 Live Demo
 Want to see CLMS-UI? [Check it out here] -> https://ayush-razz-clms.vercel.app/
 This scaffold provides a robust foundation built with:
 
-### 🎯 Core Framework
-- **⚡ Next.js 16** - The React framework for production with App Router
-- **📘 TypeScript 5** - Type-safe JavaScript for better developer experience
-- **🎨 Tailwind CSS 4** - Utility-first CSS framework for rapid UI development
+**Smart CLMS** is a state-of-the-art College Library Management System designed to bridge the gap between traditional library operations and modern digital efficiency. Built with a bleeding-edge tech stack, it provides a seamless, role-based experience for students, faculty, librarians, and administrators.
 
-### 🧩 UI Components & Styling
-- **🧩 shadcn/ui** - High-quality, accessible components built on Radix UI
-- **🎯 Lucide React** - Beautiful & consistent icon library
-- **🌈 Framer Motion** - Production-ready motion library for React
-- **🎨 Next Themes** - Perfect dark mode in 2 lines of code
+---
 
-### 📋 Forms & Validation
-- **🎣 React Hook Form** - Performant forms with easy validation
-- **✅ Zod** - TypeScript-first schema validation
+<img width="1919" height="1048" alt="image" src="https://github.com/user-attachments/assets/dfa8c379-7a41-4e5c-a5fb-3cb851b92713" />
+<img width="1919" height="1053" alt="image" src="https://github.com/user-attachments/assets/59c5b038-9031-425a-ad5f-fce747e383c2" />
+<img width="1919" height="1053" alt="image" src="https://github.com/user-attachments/assets/f2c1ca7b-56ac-46c7-8178-a92fb5b02049" />
+<img width="1917" height="1050" alt="image" src="https://github.com/user-attachments/assets/cfac4e18-8aa9-4eda-9597-b759dbd081ee" />
 
-### 🔄 State Management & Data Fetching
-- **🐻 Zustand** - Simple, scalable state management
-- **🔄 TanStack Query** - Powerful data synchronization for React
-- **🌐 Fetch** - Promise-based HTTP request
 
-### 🗄️ Database & Backend
-- **🗄️ Prisma** - Next-generation TypeScript ORM
-- **🔐 NextAuth.js** - Complete open-source authentication solution
 
-### 🎨 Advanced UI Features
-- **📊 TanStack Table** - Headless UI for building tables and datagrids
-- **🖱️ DND Kit** - Modern drag and drop toolkit for React
-- **📊 Recharts** - Redefined chart library built with React and D3
-- **🖼️ Sharp** - High performance image processing
 
-### 🌍 Internationalization & Utilities
-- **🌍 Next Intl** - Internationalization library for Next.js
-- **📅 Date-fns** - Modern JavaScript date utility library
-- **🪝 ReactUse** - Collection of essential React hooks for modern development
 
-## 🎯 Why This Scaffold?
 
-- **🏎️ Fast Development** - Pre-configured tooling and best practices
-- **🎨 Beautiful UI** - Complete shadcn/ui component library with advanced interactions
-- **🔒 Type Safety** - Full TypeScript configuration with Zod validation
-- **📱 Responsive** - Mobile-first design principles with smooth animations
-- **🗄️ Database Ready** - Prisma ORM configured for rapid backend development
-- **🔐 Auth Included** - NextAuth.js for secure authentication flows
-- **📊 Data Visualization** - Charts, tables, and drag-and-drop functionality
-- **🌍 i18n Ready** - Multi-language support with Next Intl
-- **🚀 Production Ready** - Optimized build and deployment settings
-- **🤖 AI-Friendly** - Structured codebase perfect for AI assistance
+## ✨ Key Features
 
-## 🚀 Quick Start
+### 🔐 Multi-Role Identity Management
+- **Students & Faculty**: Personalized dashboards to track borrowings, fines, and notifications.
+- **Librarians**: Advanced tools for circulation management, book inventory, and user approvals.
+- **Administrators**: Full system oversight, analytics, and configuration control.
 
-```bash
-# Install dependencies
-npm install
+### 📖 Intelligent Book Catalog
+- **Global Search**: High-performance book discovery with ISBN tracking.
+- **Categorization**: Modular organization by genre and department.
+- **Real-time Availability**: Instant tracking of "Available vs. Issued" copies.
 
-# Start development server
-npm run dev
+### 🔄 Circulation Engine
+- **One-Click Issue/Return**: Streamlined workflows for book transactions.
+- **Overdue Tracking**: Automated system to flag late returns.
+- **Dynamic Fines**: Real-time calculation and settlement of library penalties.
 
-# Build for production
- npm build
+### 📊 Advanced Reporting & UX
+- **Automated PPT Generation**: Programmatically generate professional technical overviews and reports using `PptxGenJS`.
+- **Real-time Notifications**: Instant alerts for transaction updates and system messages via Socket.io.
+- **Premium Design**: A high-fidelity, mobile-responsive interface built with **Tailwind CSS 4** and **Shadcn/UI**.
 
-# Start production server
-npm start
+---
+
+## 🛠️ Technical Stack
+
+| Category | Technology |
+| :--- | :--- |
+| **Core Framework** | [Next.js 15+]|
+| **Language** | [TypeScript 5]
+| **Styling** | [Tailwind CSS 4]
+| **Database** | [PostgreSQL (Supabase)]
+| **ORM** | [Prisma]
+| **Authentication** | [NextAuth.js] & [Supabase Auth]
+| **Real-time** | [Socket.io](https://socket.io/) |
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- [Node.js]
+- [Supabase]Account & Project
+- [PostgreSQL] Database
+
+### Installation
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/your-username/clms.git
+   cd clms
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   bun install
+   # or
+   npm install
+   ```
+
+3. **Environment Setup**:
+   Create a `.env` file in the root directory and add the following:
+   ```env
+   DATABASE_URL="your_postgresql_url"
+   DIRECT_URL="your_direct_postgresql_url"
+   NEXTAUTH_SECRET="your_secret"
+   NEXTAUTH_URL="http://localhost:3000"
+   NEXT_PUBLIC_SUPABASE_URL="your_supabase_url"
+   NEXT_PUBLIC_SUPABASE_ANON_KEY="your_supabase_anon_key"
+   ```
+
+4. **Database Initialization**:
+   ```bash
+   bun run db:generate
+   bun run db:push
+   ```
+
+5. **Run the Development Server**:
+   ```bash
+   bun run dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000) to see the result.
+
+---
+
+## 📂 Project Structure
+
+```text
+clms/
+├── prisma/             # Database schema and migrations
+├── src/
+│   ├── app/            # Next.js App Router (Routes & API)
+│   ├── components/     # Reusable UI components (Shadcn/UI)
+│   ├── hooks/          # Custom React hooks
+│   └── lib/            # Configuration (Prisma, Supabase, Utils)
+├── public/             # Static assets
+└── generate_pptx.js    # Automated reporting utility
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see your application running.
+---
 
-## 📁 Project Structure
+## 🤝 Contributing
 
-```
-src/
-├── app/                 # Next.js App Router pages
-├── components/          # Reusable React components
-│   └── ui/             # shadcn/ui components
-├── hooks/              # Custom React hooks
-└── lib/                # Utility functions and configurations
-```
+Contributions are welcome! If you'd like to improve the system, please:
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## 🎨 Available Features & Components
+---
 
-This scaffold includes a comprehensive set of modern web development tools:
+## 📄 License
 
-### 🧩 UI Components (shadcn/ui)
-- **Layout**: Card, Separator, Aspect Ratio, Resizable Panels
-- **Forms**: Input, Textarea, Select, Checkbox, Radio Group, Switch
-- **Feedback**: Alert, Toast (Sonner), Progress, Skeleton
-- **Navigation**: Breadcrumb, Menubar, Navigation Menu, Pagination
-- **Overlay**: Dialog, Sheet, Popover, Tooltip, Hover Card
-- **Data Display**: Badge, Avatar, Calendar
+Distributed under the MIT License. See `LICENSE` for more information.
 
-### 📊 Advanced Data Features
-- **Tables**: Powerful data tables with sorting, filtering, pagination (TanStack Table)
-- **Charts**: Beautiful visualizations with Recharts
-- **Forms**: Type-safe forms with React Hook Form + Zod validation
+---
 
-### 🎨 Interactive Features
-- **Animations**: Smooth micro-interactions with Framer Motion
-- **Drag & Drop**: Modern drag-and-drop functionality with DND Kit
-- **Theme Switching**: Built-in dark/light mode support
-
-### 🔐 Backend Integration
-- **Authentication**: Ready-to-use auth flows with NextAuth.js
-- **Database**: Type-safe database operations with Prisma
-- **API Client**: HTTP requests with Fetch + TanStack Query
-- **State Management**: Simple and scalable with Zustand
-
-### 🌍 Production Features
-- **Internationalization**: Multi-language support with Next Intl
-- **Image Optimization**: Automatic image processing with Sharp
-- **Type Safety**: End-to-end TypeScript with Zod validation
-- **Essential Hooks**: 100+ useful React hooks with ReactUse for common patterns
-
-## 👨‍💻 Creator
-
-Developed by **AYUSH RAJ** to demonstrate frontend development skills.
-
-Enjoy exploring the **College Library Management System**! 🍿
-
-
+<p align="center">
+  Developed with ❤️ by <b>Ayush Raj</b>
+</p>
